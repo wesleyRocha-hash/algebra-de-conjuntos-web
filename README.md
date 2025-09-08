@@ -17,7 +17,6 @@ O artigo aborda a teoria por trás da Álgebra de Conjuntos, desde seus conceito
 
 Você pode ler o artigo completo diretamente neste repositório:
 
-Ler o Artigo
 
 🛠️ *Tecnologias Utilizadas*
 
