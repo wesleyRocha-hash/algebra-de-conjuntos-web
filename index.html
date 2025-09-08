@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorador Interativo de Álgebra de Conjuntos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Areia e Céu (Sand & Sky) -->
+    <!-- Application Structure Plan: A estrutura foi desenhada em quatro seções temáticas navegáveis (Conceitos, Operações, Propriedades, Aplicações) para promover uma exploração não-linear e focada na tarefa. Em vez de uma leitura passiva, o usuário interage ativamente: seleciona conceitos para ver detalhes, define seus próprios conjuntos para visualizar operações em um diagrama de Venn dinâmico e utiliza calculadoras para entender princípios. Esta abordagem centrada no usuário visa melhorar a retenção do conhecimento e a usabilidade, tornando o conteúdo abstrato mais concreto e acessível. -->
+    <!-- Visualization & Content Choices: 1. Conceitos Fundamentais: Apresentado como uma lista interativa (HTML/JS) para focar em um conceito por vez (Meta: Informar). 2. Operações em Conjuntos: Um playground com inputs de usuário e um diagrama de Venn (Chart.js/Canvas) para feedback visual imediato (Meta: Comparar/Explorar). 3. Propriedades: Cards interativos (HTML/JS) que revelam exemplos (Meta: Organizar). 4. Aplicações: Diagramas (HTML/CSS) e uma calculadora (HTML/JS) para conectar a teoria à prática (Meta: Relacionar). A escolha do Canvas (via Chart.js) para o diagrama de Venn garante interatividade sem o uso de SVG. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f4; /* stone-100 */
+            color: #3f3f46; /* zinc-700 */
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            border-bottom-color: #3b82f6; /* blue-500 */
+            color: #1d4ed8; /* blue-700 */
+        }
+        .concept-item.active {
+            background-color: #dbeafe; /* blue-100 */
+            color: #1e40af; /* blue-800 */
+            font-weight: 500;
+        }
+        .operation-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .operation-btn.active {
+            background-color: #2563eb; /* blue-600 */
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4">
+            <h1 class="text-3xl font-bold text-blue-800">Explorador Interativo de Álgebra de Conjuntos</h1>
+            <p class="text-stone-600 mt-1">Uma ferramenta para visualizar e interagir com os conceitos fundamentais da Teoria dos Conjuntos.</p>
+        </div>
+        <nav id="navbar" class="bg-stone-50 border-b border-stone-200">
+            <div class="container mx-auto px-4 flex justify-center space-x-4 sm:space-x-8">
+                <a href="#conceitos" class="nav-link font-medium py-3 px-2 text-stone-600">Conceitos</a>
+                <a href="#operacoes" class="nav-link font-medium py-3 px-2 text-stone-600">Operações</a>
+                <a href="#propriedades" class="nav-link font-medium py-3 px-2 text-stone-600">Propriedades</a>
+                <a href="#aplicacoes" class="nav-link font-medium py-3 px-2 text-stone-600">Aplicações</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-8">
+
+        <section id="conceitos" class="mb-16 scroll-mt-24">
+            <h2 class="text-2xl font-bold text-blue-700 mb-4">Conceitos Fundamentais</h2>
+            <p class="mb-6 text-stone-700">A Teoria dos Conjuntos é a base da Álgebra de Conjuntos. Um conjunto é uma coleção não ordenada de objetos distintos. Clique nos termos abaixo para explorar suas definições e exemplos. Esta abordagem interativa permite focar em um conceito de cada vez, facilitando a compreensão.</p>
+            <div class="flex flex-col md:flex-row gap-8">
+                <div class="md:w-1/3">
+                    <ul id="concept-list" class="bg-white rounded-lg shadow p-2 space-y-1">
+                    </ul>
+                </div>
+                <div class="md:w-2/3 bg-white p-6 rounded-lg shadow-lg min-h-[300px]">
+                    <div id="concept-details">
+                        <h3 class="text-xl font-semibold text-blue-800">Selecione um conceito</h3>
+                        <p class="text-stone-600 mt-2">Escolha um item da lista à esquerda para ver os detalhes aqui.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="operacoes" class="mb-16 scroll-mt-24">
+            <h2 class="text-2xl font-bold text-blue-700 mb-4">Operações Interativas</h2>
+            <p class="mb-6 text-stone-700">Experimente as operações de conjuntos em tempo real. Insira elementos (números separados por vírgula) nos conjuntos A e B, clique em uma operação e veja o resultado e a representação visual no Diagrama de Venn. Esta é a melhor forma de entender como os conjuntos se relacionam.</p>
+            <div class="bg-white p-6 rounded-lg shadow-lg">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="setA" class="block font-medium text-stone-800 mb-1">Conjunto A</label>
+                        <input type="text" id="setA" class="w-full p-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-blue-500" placeholder="ex: 1, 2, 3, 4">
+                    </div>
+                    <div>
+                        <label for="setB" class="block font-medium text-stone-800 mb-1">Conjunto B</label>
+                        <input type="text" id="setB" class="w-full p-2 border border-stone-300 rounded-md focus:ring-2 focus:ring-blue-500" placeholder="ex: 3, 4, 5, 6">
+                    </div>
+                </div>
+                <div id="operation-buttons" class="flex flex-wrap justify-center gap-3 mb-6">
+                    <button data-op="union" class="operation-btn bg-blue-500 text-white font-semibold py-2 px-4 rounded-full">União (A ∪ B)</button>
+                    <button data-op="intersection" class="operation-btn bg-blue-500 text-white font-semibold py-2 px-4 rounded-full">Interseção (A ∩ B)</button>
+                    <button data-op="difference" class="operation-btn bg-blue-500 text-white font-semibold py-2 px-4 rounded-full">Diferença (A - B)</button>
+                    <button data-op="symmetric" class="operation-btn bg-blue-500 text-white font-semibold py-2 px-4 rounded-full">Diferença Simétrica (A Δ B)</button>
+                </div>
+                <div class="flex flex-col lg:flex-row gap-6 items-center">
+                    <div class="w-full lg:w-1/2">
+                        <div class="chart-container">
+                            <canvas id="vennDiagram"></canvas>
+                        </div>
+                    </div>
+                    <div id="operation-result" class="w-full lg:w-1/2 bg-stone-50 p-4 rounded-md border border-stone-200">
+                         <h3 class="font-bold text-lg text-blue-800">Resultado</h3>
+                         <p id="result-text" class="text-stone-700 mt-2 h-24">Selecione uma operação para ver o resultado.</p>
+                         <p class="font-mono text-xl bg-stone-200 p-2 rounded mt-2 text-center text-blue-900" id="result-set">{ }</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="propriedades" class="mb-16 scroll-mt-24">
+            <h2 class="text-2xl font-bold text-blue-700 mb-4">Propriedades Algébricas</h2>
+            <p class="mb-6 text-stone-700">As operações de conjuntos seguem regras consistentes, similares às da álgebra tradicional. Explore as principais propriedades que governam a união e a interseção. Elas são a base para a manipulação lógica de conjuntos em diversas áreas da computação.</p>
+            <div id="properties-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+        </section>
+
+        <section id="aplicacoes" class="scroll-mt-24">
+            <h2 class="text-2xl font-bold text-blue-700 mb-4">Relação com a Lógica e Aplicações</h2>
+            <p class="mb-6 text-stone-700">A Álgebra de Conjuntos não é apenas teórica; ela é a fundação da lógica computacional moderna, usada em bancos de dados, algoritmos de busca e muito mais. Esta seção mostra a conexão direta entre operações de conjuntos e conectivos lógicos, e apresenta uma ferramenta para calcular a cardinalidade da união.</p>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold text-blue-800 mb-4">Conectivos Lógicos</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4">
+                            <div class="text-2xl font-bold text-blue-600">A ∪ B</div>
+                            <div class="text-2xl text-stone-400">⇔</div>
+                            <div class="text-2xl font-bold text-green-600">A OU B (∨)</div>
+                        </div>
+                        <p class="text-stone-600">A **União** corresponde ao conectivo lógico **OU**. Um elemento está em A ∪ B se ele pertence a A **ou** pertence a B.</p>
+                    </div>
+                    <hr class="my-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4">
+                            <div class="text-2xl font-bold text-blue-600">A ∩ B</div>
+                            <div class="text-2xl text-stone-400">⇔</div>
+                            <div class="text-2xl font-bold text-green-600">A E B (∧)</div>
+                        </div>
+                        <p class="text-stone-600">A **Interseção** corresponde ao conectivo lógico **E**. Um elemento está em A ∩ B se ele pertence a A **e** pertence a B.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold text-blue-800 mb-4">Princípio da Inclusão-Exclusão</h3>
+                    <p class="text-stone-600 mb-4">Calcule a cardinalidade da união: <br><code class="bg-stone-200 p-1 rounded text-sm">|A ∪ B| = |A| + |B| - |A ∩ B|</code></p>
+                    <div class="grid grid-cols-3 gap-2 mb-4">
+                        <div>
+                            <label for="cardA" class="text-sm font-medium">|A|</label>
+                            <input type="number" id="cardA" class="w-full p-2 border border-stone-300 rounded-md" value="4">
+                        </div>
+                        <div>
+                            <label for="cardB" class="text-sm font-medium">|B|</label>
+                            <input type="number" id="cardB" class="w-full p-2 border border-stone-300 rounded-md" value="4">
+                        </div>
+                        <div>
+                            <label for="cardInt" class="text-sm font-medium">|A ∩ B|</label>
+                            <input type="number" id="cardInt" class="w-full p-2 border border-stone-300 rounded-md" value="2">
+                        </div>
+                    </div>
+                    <button id="calculate-inclusion" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-md hover:bg-green-700 transition-colors">Calcular |A ∪ B|</button>
+                    <p id="inclusion-result" class="mt-4 text-center text-lg font-bold text-blue-800"></p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white mt-16 border-t">
+        <div class="container mx-auto px-4 py-6 text-center text-stone-500">
+            <p>Desenvolvido como uma ferramenta educacional interativa.</p>
+            <p class="text-sm">Wesley Fernandes Rocha, Anhanguera, 2025.</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { Chart } from 'https://cdn.jsdelivr.net/npm/chart.js';
+        import { VennDiagramController, ArcSliceElement, ArcSliceSegment } from 'https://cdn.jsdelivr.net/npm/chartjs-chart-venn@1.1.0/dist/chartjs-chart-venn.min.js';
+
+        // Registrar os componentes do gráfico de Venn
+        Chart.register(VennDiagramController, ArcSliceElement, ArcSliceSegment);
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const concepts = [
+                {
+                    name: 'Conjunto',
+                    symbol: '',
+                    description: 'Uma coleção não ordenada de objetos distintos, que possuem alguma relação entre si. Geralmente, os objetos de um conjunto compartilham uma propriedade comum.',
+                    example: 'A = {verde, amarelo, azul, branco}'
+                },
+                {
+                    name: 'Elemento e Pertinência',
+                    symbol: '∈',
+                    description: 'Um objeto que pertence a um conjunto é um elemento. A relação de pertinência (∈) indica que um elemento faz parte de um conjunto. A não pertinência é indicada por ∉.',
+                    example: 'Se A = {1, 2, 3}, então 2 ∈ A, mas 4 ∉ A.'
+                },
+                {
+                    name: 'Cardinalidade',
+                    symbol: '|A|',
+                    description: 'É o número de elementos de um conjunto. Se a cardinalidade é um número inteiro, o conjunto é finito.',
+                    example: 'Se B = {a, b, c, d}, então |B| = 4.'
+                },
+                {
+                    name: 'Subconjunto',
+                    symbol: '⊆',
+                    description: 'Um conjunto A é subconjunto de B se, e somente se, todo elemento de A também pertence a B. Se A é subconjunto de B mas não é igual, é um subconjunto próprio (⊂).',
+                    example: 'Se A = {1, 2} e B = {1, 2, 3}, então A ⊆ B.'
+                },
+                {
+                    name: 'Conjunto Vazio',
+                    symbol: '∅ ou {}',
+                    description: 'O conjunto que não possui nenhum elemento. Sua cardinalidade é zero. O conjunto vazio é subconjunto de qualquer conjunto.',
+                    example: 'O conjunto de números inteiros que são maiores que 5 e menores que 5 é ∅.'
+                },
+                {
+                    name: 'Igualdade de Conjuntos',
+                    symbol: '=',
+                    description: 'Dois conjuntos A e B são iguais se possuem exatamente os mesmos elementos, não importando a ordem ou repetição.',
+                    example: 'Se A = {1, 2, 3} e B = {3, 1, 2}, então A = B.'
+                }
+            ];
+
+            const properties = [
+                {
+                    name: 'Comutatividade',
+                    union: 'A ∪ B = B ∪ A',
+                    intersection: 'A ∩ B = B ∩ A',
+                    description: 'A ordem dos conjuntos não altera o resultado da união ou da interseção.'
+                },
+                {
+                    name: 'Associatividade',
+                    union: 'A ∪ (B ∪ C) = (A ∪ B) ∪ C',
+                    intersection: 'A ∩ (B ∩ C) = (A ∩ B) ∩ C',
+                    description: 'O agrupamento dos conjuntos não afeta o resultado final.'
+                },
+                {
+                    name: 'Distributividade',
+                    union: 'A ∪ (B ∩ C) = (A ∪ B) ∩ (A ∪ C)',
+                    intersection: 'A ∩ (B ∪ C) = (A ∩ B) ∪ (A ∩ C)',
+                    description: 'Uma operação "se distribui" sobre outra, de forma análoga à multiplicação sobre a adição.'
+                },
+                {
+                    name: 'Leis de De Morgan',
+                    union: '(A ∪ B)ᶜ = Aᶜ ∩ Bᶜ',
+                    intersection: '(A ∩ B)ᶜ = Aᶜ ∪ Bᶜ',
+                    description: 'Relacionam o complemento da união e da interseção com as operações nos complementos individuais.'
+                }
+            ];
+
+            const conceptList = document.getElementById('concept-list');
+            const conceptDetails = document.getElementById('concept-details');
+
+            concepts.forEach((concept, index) => {
+                const li = document.createElement('li');
+                const button = document.createElement('button');
+                button.className = 'concept-item w-full text-left px-4 py-2 rounded-md hover:bg-stone-100 transition-colors';
+                button.textContent = concept.name;
+                button.onclick = () => {
+                    displayConcept(concept);
+                    document.querySelectorAll('.concept-item').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                };
+                li.appendChild(button);
+                conceptList.appendChild(li);
+                if (index === 0) {
+                    button.click();
+                }
+            });
+
+            function displayConcept(concept) {
+                conceptDetails.innerHTML = `
+                    <h3 class="text-xl font-semibold text-blue-800 flex items-center gap-2">${concept.name} ${concept.symbol ? `<span class="font-mono bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-lg">${concept.symbol}</span>` : ''}</h3>
+                    <p class="text-stone-700 mt-3">${concept.description}</p>
+                    <div class="mt-4 bg-stone-50 border-l-4 border-blue-500 p-3">
+                        <p class="font-medium text-stone-800">Exemplo:</p>
+                        <p class="font-mono text-stone-600 mt-1">${concept.example}</p>
+                    </div>
+                `;
+            }
+
+            const propertiesGrid = document.getElementById('properties-grid');
+            properties.forEach(prop => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-6 rounded-lg shadow-lg';
+                card.innerHTML = `
+                    <h3 class="text-xl font-semibold text-blue-800 mb-3">${prop.name}</h3>
+                    <p class="text-stone-600 mb-4">${prop.description}</p>
+                    <div class="font-mono text-sm space-y-2">
+                        <p class="bg-stone-100 p-2 rounded"><strong>União:</strong> ${prop.union}</p>
+                        <p class="bg-stone-100 p-2 rounded"><strong>Interseção:</strong> ${prop.intersection}</p>
+                    </div>
+                `;
+                propertiesGrid.appendChild(card);
+            });
+
+            const setAInput = document.getElementById('setA');
+            const setBInput = document.getElementById('setB');
+            const operationButtons = document.getElementById('operation-buttons');
+            const resultText = document.getElementById('result-text');
+            const resultSetElem = document.getElementById('result-set');
+            
+            let vennChart;
+
+            function parseSet(input) {
+                if (!input.trim()) return new Set();
+                return new Set(input.split(',').map(item => item.trim()).filter(Boolean).map(Number));
+            }
+
+            function updateVennDiagram(op = null) {
+                const setA = parseSet(setAInput.value);
+                const setB = parseSet(setBInput.value);
+
+                const intersection = new Set([...setA].filter(x => setB.has(x)));
+                const differenceA = new Set([...setA].filter(x => !setB.has(x)));
+                const differenceB = new Set([...setB].filter(x => !setA.has(x)));
+
+                const labels = [
+                    { sets: ['A'], size: differenceA.size, label: `A-B (${differenceA.size})` },
+                    { sets: ['B'], size: differenceB.size, label: `B-A (${differenceB.size})` },
+                    { sets: ['A', 'B'], size: intersection.size, label: `A∩B (${intersection.size})` },
+                ];
+                
+                const colors = {
+                    'A': 'rgba(59, 130, 246, 0.5)',
+                    'B': 'rgba(34, 197, 94, 0.5)',
+                    'A&B': 'rgba(37, 99, 235, 0.7)',
+                    'default': 'rgba(209, 213, 219, 0.5)'
+                };
+
+                let activeBackgroundColor = colors.default;
+                let activeBorderColor = 'rgba(107, 114, 128, 1)';
+
+                if (op === 'union') {
+                    activeBackgroundColor = [colors.A, colors.B, colors['A&B']];
+                } else if (op === 'intersection') {
+                    activeBackgroundColor = [colors.default, colors.default, colors['A&B']];
+                } else if (op === 'difference') {
+                    activeBackgroundColor = [colors.A, colors.default, colors.default];
+                } else if (op === 'symmetric') {
+                    activeBackgroundColor = [colors.A, colors.B, colors.default];
+                }
+
+                const chartData = {
+                    labels: labels.map(l => l.label),
+                    datasets: [{
+                        data: labels,
+                        backgroundColor: Array.isArray(activeBackgroundColor) ? activeBackgroundColor : [activeBackgroundColor, activeBackgroundColor, activeBackgroundColor],
+                        borderColor: activeBorderColor,
+                        borderWidth: op ? 2 : 1
+                    }]
+                };
+
+                if (vennChart) {
+                    vennChart.data = chartData;
+                    vennChart.update();
+                } else {
+                    const ctx = document.getElementById('vennDiagram').getContext('2d');
+                    vennChart = new Chart(ctx, {
+                        type: 'venn',
+                        data: chartData,
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { enabled: false }
+                            },
+                            layout: {
+                                padding: 10
+                            }
+                        }
+                    });
+                }
+            }
+
+            operationButtons.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') {
+                    const op = e.target.dataset.op;
+                    
+                    document.querySelectorAll('.operation-btn').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+
+                    const setA = parseSet(setAInput.value);
+                    const setB = parseSet(setBInput.value);
+                    let resultSet = new Set();
+                    let resultDescription = '';
+
+                    switch (op) {
+                        case 'union':
+                            resultSet = new Set([...setA, ...setB]);
+                            resultDescription = 'A união (A ∪ B) contém todos os elementos que pertencem a A, ou a B, ou a ambos.';
+                            break;
+                        case 'intersection':
+                            resultSet = new Set([...setA].filter(x => setB.has(x)));
+                            resultDescription = 'A interseção (A ∩ B) contém apenas os elementos comuns a A e B.';
+                            break;
+                        case 'difference':
+                            resultSet = new Set([...setA].filter(x => !setB.has(x)));
+                            resultDescription = 'A diferença (A - B) contém os elementos que pertencem a A, mas não a B.';
+                            break;
+                        case 'symmetric':
+                            const diffAB = new Set([...setA].filter(x => !setB.has(x)));
+                            const diffBA = new Set([...setB].filter(x => !setA.has(x)));
+                            resultSet = new Set([...diffAB, ...diffBA]);
+                            resultDescription = 'A diferença simétrica (A Δ B) contém os elementos que pertencem a A ou a B, mas não a ambos.';
+                            break;
+                    }
+                    
+                    resultText.textContent = resultDescription;
+                    const sortedResult = Array.from(resultSet).sort((a, b) => a - b);
+                    resultSetElem.textContent = `{ ${sortedResult.join(', ')} }`;
+                    updateVennDiagram(op);
+                }
+            });
+
+            setAInput.addEventListener('input', () => updateVennDiagram());
+            setBInput.addEventListener('input', () => updateVennDiagram());
+            setAInput.value = '1, 2, 3, 4';
+            setBInput.value = '3, 4, 5, 6';
+            updateVennDiagram();
+
+            const cardAInput = document.getElementById('cardA');
+            const cardBInput = document.getElementById('cardB');
+            const cardIntInput = document.getElementById('cardInt');
+            const calculateBtn = document.getElementById('calculate-inclusion');
+            const inclusionResult = document.getElementById('inclusion-result');
+
+            function calculateInclusionExclusion() {
+                const a = parseInt(cardAInput.value) || 0;
+                const b = parseInt(cardBInput.value) || 0;
+                const intersect = parseInt(cardIntInput.value) || 0;
+                const union = a + b - intersect;
+                inclusionResult.textContent = `|A ∪ B| = ${a} + ${b} - ${intersect} = ${union}`;
+            }
+
+            calculateBtn.addEventListener('click', calculateInclusionExclusion);
+            [cardAInput, cardBInput, cardIntInput].forEach(input => {
+                input.addEventListener('input', calculateInclusionExclusion);
+            });
+            calculateInclusionExclusion();
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href').substring(1) === entry.target.id);
+                        });
+                    }
+                });
+            }, { rootMargin: "-50% 0px -50% 0px", threshold: 0 });
+
+            sections.forEach(section => observer.observe(section));
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
