@@ -185,14 +185,13 @@
         </div>
     </footer>
 
-    <script type="module">
-        import { Chart } from 'https://cdn.jsdelivr.net/npm/chart.js';
-        import { VennDiagramController, ArcSliceElement, ArcSliceSegment } from 'https://cdn.jsdelivr.net/npm/chartjs-chart-venn@1.1.0/dist/chartjs-chart-venn.min.js';
-
-        // Registrar os componentes do gráfico de Venn
-        Chart.register(VennDiagramController, ArcSliceElement, ArcSliceSegment);
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-venn@1.1.0/dist/chartjs-chart-venn.min.js"></script>
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
+
+            // As bibliotecas Chart.js e chartjs-chart-venn se registram automaticamente.
+            // A tentativa de registrar manualmente na versão anterior estava causando o erro.
 
             const concepts = [
                 {
@@ -243,13 +242,13 @@
                 {
                     name: 'Associatividade',
                     union: 'A ∪ (B ∪ C) = (A ∪ B) ∪ C',
-                    intersection: 'A ∩ (B ∩ C) = (A ∩ B) ∩ C',
+                    intersection: 'A ∩ (B ∩ C) = (A ∩ B) ∪ (A ∪ C)',
                     description: 'O agrupamento dos conjuntos não afeta o resultado final.'
                 },
                 {
                     name: 'Distributividade',
                     union: 'A ∪ (B ∩ C) = (A ∪ B) ∩ (A ∪ C)',
-                    intersection: 'A ∩ (B ∪ C) = (A ∩ B) ∪ (A ∩ C)',
+                    intersection: 'A ∩ (B ∪ C) = (A ∩ B) ∪ (A ∪ C)',
                     description: 'Uma operação "se distribui" sobre outra, de forma análoga à multiplicação sobre a adição.'
                 },
                 {
@@ -364,26 +363,25 @@
                 };
 
                 if (vennChart) {
-                    vennChart.data = chartData;
-                    vennChart.update();
-                } else {
-                    const ctx = document.getElementById('vennDiagram').getContext('2d');
-                    vennChart = new Chart(ctx, {
-                        type: 'venn',
-                        data: chartData,
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { enabled: false }
-                            },
-                            layout: {
-                                padding: 10
-                            }
-                        }
-                    });
+                    vennChart.destroy();
                 }
+
+                const ctx = document.getElementById('vennDiagram').getContext('2d');
+                vennChart = new Chart(ctx, {
+                    type: 'venn',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: false }
+                        },
+                        layout: {
+                            padding: 10
+                        }
+                    }
+                });
             }
 
             operationButtons.addEventListener('click', (e) => {
