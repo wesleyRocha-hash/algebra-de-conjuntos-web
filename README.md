@@ -7,7 +7,7 @@ Uma ferramenta interativa, que permite visualizar as operações de conjuntos em
 Um artigo completo, que detalha os conceitos, propriedades e a importância da Álgebra de Conjuntos na computação.
 
 🚀 *Acesso à Ferramenta Interativa*
-Você pode acessar a ferramenta interativa diretamente na web, hospedada pelo GitHub Pages. 
+Você pode acessar a ferramenta interativa diretamente na web, hospedada pelo GitHub Pages: https://wesleyrocha-hash.github.io/algebra-de-conjuntos-web/
 
 
 
